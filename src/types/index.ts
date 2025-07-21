@@ -18,6 +18,15 @@ export interface IForm {
 export interface ICardsList {
   cards: ICard[];
   preview: string | null;
+  showCard(cardId: ICard): void;
+  getCard(cardId: string): ICard;
+  addToBasket(cardId: string): void;
+}
+
+export interface IFormData {
+  setPaymentAndAddress(paymentType: 'online' | 'cash', address: string): void;
+  setContacts(data: Record<keyof TContact, string>): void;
+  clearData(): void;
 }
 
 export type TProductThumbnail = Pick<ICard, '_id' | 'category' | 'title' | 'image' | 'price'>;
