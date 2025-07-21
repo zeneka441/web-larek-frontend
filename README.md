@@ -1,3 +1,5 @@
+Ссылка на проект: https://github.com/zeneka441/web-larek-frontend
+
 # Проектная работа "Веб-ларек"
 
 Стек: HTML, SCSS, TS, Webpack
