@@ -22,6 +22,14 @@ export interface ICardsList {
   getCard(cardId: string): ICard;
 }
 
+export interface IBasketModel {
+  add(cardId: string): void;
+  remove(cardId: string): void;
+  getItems(): ICard[];
+  getTotal(): number;
+  clear(): void;
+}
+
 export interface IFormData {
   setPaymentAndAddress(paymentType: 'online' | 'cash', address: string): void;
   setContacts(data: Record<keyof TContact, string>): void;
