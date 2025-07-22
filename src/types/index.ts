@@ -20,7 +20,6 @@ export interface ICardsList {
   preview: string | null;
   showCard(cardId: ICard): void;
   getCard(cardId: string): ICard;
-  addToBasket(cardId: string): void;
 }
 
 export interface IFormData {
