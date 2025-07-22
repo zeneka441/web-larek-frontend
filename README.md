@@ -165,7 +165,11 @@ export type TContact = Pick<IForm, 'email' | 'phone'>;
 - clearData() - сбрасывает все сохранённые данные формы, например после успешной оплаты.
 
 #### 2.3 Класс BasketModel
-Класс управляет корзиной товаров. 
+Класс управляет корзиной товаров.\
+Поля:
+- `items: ICard[]` - текущие товары в корзине
+- `events: EventEmitter` - брокер событий для обработки `card:add` и `cart:item-remove`.
+
 ##### Методы:
 - add(cardId: string) - добавить товар;
 - remove(cardId: string) - удалить товар;
