@@ -186,7 +186,7 @@ export type TContact = Pick<IForm, 'email' | 'phone'>;
 
 ##### Поля:
 - element: HTMLElement - DOM-элемент карточки;
-- card: TProductThumbnail - данные карточки;
+- render(card: TProductThumbnail) - получает данные карточки и использует их для отображения;
 - events: EventEmitter - брокер событий.
 
 ##### Методы:
@@ -202,7 +202,7 @@ export type TContact = Pick<IForm, 'email' | 'phone'>;
 - events: EventEmitter - брокер событий.
 
 ##### Методы:
-- open(data: ICard) - отображает модалку с переданными данными;
+- open(content: HTMLElement) - отображает модалку, принимая html элемент, который нужно отобразить;
 - close() - закрывает модалку;
 - setEventHandlers() - вешает обработчики для закрытия по esc, оверлей и кнопке.
 
@@ -214,7 +214,7 @@ export type TContact = Pick<IForm, 'email' | 'phone'>;
 - events: EventEmitter - брокер событий.
 
 ##### Методы:
-- render(cards: TProductThumbnail[]) - отображает список товаров;
+- render(elements: HTMLElement[]) — принимает массив html-элементов карточек товаров и отображает их внутри контейнера;
 - setHandlers(callback: (id: string) => void) - устанавливает обработчик кликов на карточки.
 
 
@@ -226,7 +226,7 @@ export type TContact = Pick<IForm, 'email' | 'phone'>;
 - events: EventEmitter - брокер событий.
 
 ##### Методы:
-- render(items: TProductCart[], total: number) - отрисовывает список товаров и итоговую сумму;
+- render(elements: HTMLElement[], total: number) - принимает массив DOM-элементов товаров и итоговую сумму, отображает содержимое корзины;
 - onCheckout(callback: () => void) - устанавливает обработчик кнопки "Оформить";
 - onRemove(callback: (id: string) => void) - передаёт обработчик кнопок удаления.
 
@@ -243,7 +243,7 @@ export type TContact = Pick<IForm, 'email' | 'phone'>;
 ##### Методы:
 - render() - отрисовывает поля и кнопку Далее;
 - onComplete(callback: (data: TPayment) => void) - вызывает колбэк при валидной отправке;
-- validate() - валидирует форму и управляет состоянием кнопки.
+- validate() - собирает введенные данные и передает их в модель для валидации.
 
 #### 2.4.6 Класс ConfirmationView
 Класс отображает финальный экран с подтверждением успешного оформления заказа.
@@ -252,7 +252,7 @@ export type TContact = Pick<IForm, 'email' | 'phone'>;
 - container: HTMLElement - DOM-элемент, в который рендерится подтверждение.
 
 ##### Методы:
-- render() - показывает сообщение об успешной покупке;
+- render(total: number) - показывает сообщение об успешной покупке и итоговую сумму списания;
 - clear() - сбрасывает форму.
 
 
