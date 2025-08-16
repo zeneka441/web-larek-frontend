@@ -27,13 +27,20 @@ import { SELECTORS } from './utils/constants';
 import { ensureElement } from './utils/utils';
 
 document.addEventListener('DOMContentLoaded', async () => {
+	ensureElement<HTMLDivElement>(SELECTORS.modalRoot).classList.remove(
+		'modal_active'
+	);
+
 	const events = new EventEmitter();
 	const api = new LarekApi();
 	const cards = new CardsList(events);
 	const basket = new BasketModel(events);
 	const form = new FormDataModel(events);
 	const catalogView = new CatalogView();
-	const modal = new Modal();
+	const modal = new Modal(
+		ensureElement<HTMLDivElement>(SELECTORS.modalRoot),
+		events
+	);
 
 	const basketBtn = ensureElement<HTMLButtonElement>(SELECTORS.basketButton);
 	const basketCounter = ensureElement<HTMLSpanElement>(SELECTORS.basketCounter);
@@ -57,7 +64,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 			basket.add(card);
 			modal.close();
 		});
-		modal.open(view.element);
+		modal.render({ content: view.element });
 	}
 
 	function openBasket() {
@@ -78,8 +85,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 			},
 			() => openOrderStep1()
 		);
-
-		modal.open(cartView.element);
+		modal.render({ content: cartView.element });
 	}
 
 	function openOrderStep1() {
@@ -87,7 +93,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 			form.setPaymentAndAddress(data);
 			openOrderStep2();
 		});
-		modal.open(step1.element);
+		modal.render({ content: step1.element });
 	}
 
 	function openOrderStep2() {
@@ -100,9 +106,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 			form.reset();
 
 			const ok = new ConfirmationView();
-			modal.open(ok.render(res.total, () => modal.close()));
+			modal.render({ content: ok.render(res.total, () => modal.close()) });
 		});
-		modal.open(step2.element);
+		modal.render({ content: step2.element });
 	}
 
 	function updateCounter() {
@@ -118,7 +124,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 		events.on<ICard>('catalog:preview', (card) => openPreview(card));
 		events.on('cart:changed', () => updateCounter());
 		updateCounter();
-    } catch (e) {
-        e instanceof Error ? e.message : String(e);
+	} catch (e) {
+		e instanceof Error ? e.message : String(e);
 	}
 });
