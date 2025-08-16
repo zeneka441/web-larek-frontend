@@ -8,21 +8,12 @@ export interface ILarekAPI {
 	createOrder: (order: IForm) => Promise<{ id: string; total: number }>;
 }
 
+type ProductListResponse = ApiListResponse<ICard>;
+
 function abs(cdn: string, image?: string): string {
 	if (!image) return '';
 	if (/^https?:\/\//.test(image)) return image;
 	return `${cdn.replace(/\/$/, '')}/${String(image).replace(/^\//, '')}`;
-}
-
-function normalizeList<T>(res: unknown): T[] {
-	if (Array.isArray(res)) return res as T[];
-	if (res && typeof res === 'object') {
-		const o = res as Record<string, unknown>;
-		for (const key of ['items', 'data', 'products', 'result']) {
-			const v = o[key];
-			if (Array.isArray(v)) return v as T[];
-		}
-	}
 }
 
 function toCard(raw: unknown, cdn: string): ICard {
@@ -33,6 +24,17 @@ function toCard(raw: unknown, cdn: string): ICard {
 		_id: id,
 		image: abs(cdn, any.image as string | undefined),
 	} as ICard;
+}
+
+function calcTotal(items: ICard[]): number {
+	return items.reduce(
+		(sum, it) => sum + (typeof it.price === 'number' ? it.price : 0),
+		0
+	);
+}
+
+function normalizeListStrict(res: ProductListResponse | ICard[]): ICard[] {
+	return Array.isArray(res) ? res : res.items;
 }
 
 export class LarekApi extends Api implements ILarekAPI {
@@ -48,31 +50,39 @@ export class LarekApi extends Api implements ILarekAPI {
 	}
 
 	getProductList(): Promise<ICard[]> {
-		return this.get('/product').then(
-			(data: ApiListResponse<ICard> | ICard[] | unknown) =>
-				normalizeList<ICard>(data).map((item) => toCard(item, this.cdn))
+		return this.get('/product').then((data: ProductListResponse | ICard[]) =>
+			normalizeListStrict(data).map((item) => toCard(item, this.cdn))
 		);
 	}
 
 	getProductItem(id: string): Promise<ICard> {
-		return this.get(`/product/${id}`).then((item: ICard | unknown) =>
+		return this.get(`/product/${id}`).then((item: unknown) =>
 			toCard(item, this.cdn)
 		);
 	}
 
 	createOrder(order: IForm): Promise<{ id: string; total: number }> {
-		return this.post('/order', order).then((resp: unknown) => {
+		const total = calcTotal(order.items);
+
+		const payload = {
+			payment: order.paymentType === 'online' ? 'card' : 'cash',
+			email: order.email,
+			phone: order.phone,
+			address: order.address,
+			items: order.items.map((i) => i._id),
+			total,
+		};
+
+		return this.post('/order', payload).then((resp: unknown) => {
 			const any = resp as Record<string, unknown>;
 			const id = String(
 				any.id ??
 					(any.data as Record<string, unknown> | undefined)?.id ??
 					'order'
 			);
-			const total =
-				typeof any.total === 'number'
-					? (any.total as number)
-					: order.items.reduce((s, it) => s + (it.price ?? 0), 0);
-			return { id, total };
+			const respTotal =
+				typeof any.total === 'number' ? (any.total as number) : total;
+			return { id, total: respTotal };
 		});
 	}
 }
