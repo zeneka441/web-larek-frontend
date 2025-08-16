@@ -1,5 +1,5 @@
 export function pascalToKebab(value: string): string {
-    return value.replace(/([a-z0–9])([A-Z])/g, "$1-$2").toLowerCase();
+    return value.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
 }
 
 export function isSelector(x: any): x is string {
@@ -81,12 +81,15 @@ export function setElementData<T extends Record<string, unknown> | object>(el: H
 /**
  * Получает типизированные данные из dataset атрибутов элемента
  */
-export function getElementData<T extends Record<string, unknown>>(el: HTMLElement, scheme: Record<string, Function>): T {
-    const data: Partial<T> = {};
-    for (const key in el.dataset) {
-        data[key as keyof T] = scheme[key](el.dataset[key]);
-    }
-    return data as T;
+export function getElementData<T extends Record<string, unknown>>(
+	el: HTMLElement,
+	scheme: Record<string, (v: string | undefined) => unknown>
+): T {
+	const data: Record<string, unknown> = {};
+	Object.keys(scheme).forEach((key) => {
+		data[key] = scheme[key](el.dataset[key]);
+	});
+	return data as T;
 }
 
 /**
