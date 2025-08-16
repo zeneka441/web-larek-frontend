@@ -15,7 +15,6 @@ import { BasketModel } from './model/basket';
 import { FormDataModel } from './model/form';
 
 import { CatalogView } from './components/CatalogView';
-
 import { CardView, CardPreviewView } from './components/CardView';
 import { CartView } from './components/CartView';
 import { OrderStep1View } from './components/OrderStep1View';
@@ -116,7 +115,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 	}
 
 	try {
-		const catalog = await api.getCatalog();
+		const catalog = await api.getProductList();
 		cards.setCards(catalog);
 		renderCatalog(catalog);
 
@@ -124,7 +123,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 		events.on<ICard>('catalog:preview', (card) => openPreview(card));
 		events.on('cart:changed', () => updateCounter());
 		updateCounter();
-	} catch (e) {
-		e instanceof Error ? e.message : String(e);
+    } catch (e) {
+        e instanceof Error ? e.message : String(e);
 	}
 });
