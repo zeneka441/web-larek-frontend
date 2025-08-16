@@ -26,31 +26,55 @@ export class OrderStep1View {
 		this.element
 	);
 
-	private payment: 'online' | 'cash' = 'online';
+	private payment: 'online' | 'cash' | null = null;
+	private paymentClicked = false;
 
 	constructor(onDone: (data: TPayment) => void) {
-		this.btnCard.addEventListener('click', () => this.setPayment('online'));
-		this.btnCash.addEventListener('click', () => this.setPayment('cash'));
-		this.address.addEventListener('input', () => this.validate());
+		this.btnCard.addEventListener('click', () => this.choosePayment('online'));
+		this.btnCash.addEventListener('click', () => this.choosePayment('cash'));
+
+		this.address.addEventListener('input', () =>
+			this.validate(this.paymentClicked)
+		);
+
 		this.element.addEventListener('submit', (e) => {
 			e.preventDefault();
-			if (this.validate())
-				onDone({ paymentType: this.payment, address: this.address.value });
+			if (this.validate(true)) {
+				onDone({
+					paymentType: this.payment as 'online' | 'cash',
+					address: this.address.value.trim(),
+				});
+			}
 		});
-		this.validate();
+
+		this.errors.textContent = '';
+		this.validate(false);
 	}
 
-	private setPayment(p: 'online' | 'cash') {
+	private choosePayment(p: 'online' | 'cash') {
 		this.payment = p;
+		this.paymentClicked = true;
+
 		this.btnCard.classList.toggle('button_alt', p !== 'online');
 		this.btnCash.classList.toggle('button_alt', p !== 'cash');
-		this.validate();
+
+		this.validate(true);
 	}
 
-	private validate(): boolean {
-		const ok = this.address.value.trim().length > 3;
-		this.errors.textContent = ok ? '' : 'Введите адрес (мин. 4 символа)';
-		setDisabled(this.submit, !ok);
-		return ok;
+	private validate(showErrors: boolean): boolean {
+		const addressOk = this.address.value.trim().length > 0;
+		const paymentOk = this.payment !== null;
+
+		setDisabled(this.submit, !(addressOk && paymentOk));
+
+		if (showErrors) {
+			if (!paymentOk) this.errors.textContent = 'Выберите способ оплаты';
+			else if (!addressOk) this.errors.textContent = 'Необходимо указать адрес';
+			else this.errors.textContent = '';
+		} else {
+			this.errors.textContent = '';
+		}
+
+		return addressOk && paymentOk;
 	}
 }

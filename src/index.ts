@@ -59,10 +59,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 	}
 
 	function openPreview(card: ICard) {
-		const view = new CardPreviewView(card, () => {
-			basket.add(card);
-			modal.close();
+		const inCart = basket.getItems().some((i) => i._id === card._id);
+
+		const view = new CardPreviewView(card, {
+			inCart,
+			onAdd: () => {
+				basket.add(card);
+				modal.close();
+			},
+			onRemove: () => {
+				basket.remove(card._id);
+				modal.close();
+			},
 		});
+
 		modal.render({ content: view.element });
 	}
 
@@ -123,7 +133,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 		events.on<ICard>('catalog:preview', (card) => openPreview(card));
 		events.on('cart:changed', () => updateCounter());
 		updateCounter();
-    } catch (e) {
-        e instanceof Error ? e.message : String(e);
+	} catch (e) {
+		e instanceof Error ? e.message : String(e);
 	}
 });

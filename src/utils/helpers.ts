@@ -1,5 +1,5 @@
 export function formatPrice(value: number | null, currency: string): string {
-	if (value === null) return 'Бесценно';
+	if (value === null || value === 0) return 'Бесценно';
 	return `${value} ${currency}`;
 }
 
