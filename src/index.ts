@@ -98,10 +98,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 	}
 
 	function openOrderStep1() {
-		const step1 = new OrderStep1View((data: TPayment) => {
-			form.setPaymentAndAddress(data);
-			openOrderStep2();
-		});
+		const step1 = new OrderStep1View(
+			form.validateStep1.bind(form),
+			(data: TPayment) => {
+				form.setPaymentAndAddress(data);
+				openOrderStep2();
+			}
+		);
 		modal.render({ content: step1.element });
 	}
 

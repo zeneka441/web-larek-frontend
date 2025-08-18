@@ -1,24 +1,50 @@
-import type { ICard, IForm, TContact, TPayment } from '../types';
-import { EventEmitter } from '../components/base/events';
+import type { ICard, IForm, TPayment, TContact } from '../types';
+import type { IEvents } from '../components/base/events';
+
 
 export class FormDataModel {
-	paymentType: 'online' | 'cash' = 'online';
+	paymentType: 'online' | 'cash' | null = null;
 	address = '';
 	email = '';
 	phone = '';
 
-	constructor(private events: EventEmitter) {}
+	constructor(private events: IEvents) {}
 
-	setPaymentAndAddress(step1: TPayment) {
-		this.paymentType = step1.paymentType;
-		this.address = step1.address.trim();
-		this.events.emit('form:step1-completed', step1);
+	validateStep1(
+		payment: 'online' | 'cash' | null,
+		address: string
+	): {
+		valid: boolean;
+		paymentOk: boolean;
+		addressOk: boolean;
+		paymentError?: string;
+		addressError?: string;
+	} {
+		const paymentOk = payment !== null;
+		const addressOk = address.trim().length > 0;
+
+		return {
+			valid: paymentOk && addressOk,
+			paymentOk,
+			addressOk,
+			paymentError: paymentOk ? undefined : 'Выберите способ оплаты',
+			addressError: addressOk ? undefined : 'Необходимо указать адрес',
+		};
 	}
 
-	setContacts(step2: TContact) {
-		this.email = step2.email.trim();
-		this.phone = step2.phone.trim();
-		this.events.emit('form:step2-completed', step2);
+	setPaymentAndAddress({ paymentType, address }: TPayment) {
+		this.paymentType = paymentType;
+		this.address = address.trim();
+		this.events.emit('form:step1', {
+			paymentType: this.paymentType,
+			address: this.address,
+		});
+	}
+
+	setContacts({ email, phone }: TContact) {
+		this.email = email.trim();
+		this.phone = phone.trim();
+		this.events.emit('form:step2', { email: this.email, phone: this.phone });
 	}
 
 	toOrder(items: ICard[]): IForm {
@@ -32,8 +58,10 @@ export class FormDataModel {
 	}
 
 	reset() {
-		this.paymentType = 'online';
-		this.address = this.email = this.phone = '';
-		this.events.emit('order:reset');
+		this.paymentType = null;
+		this.address = '';
+		this.email = '';
+		this.phone = '';
+		this.events.emit('form:reset', {});
 	}
 }

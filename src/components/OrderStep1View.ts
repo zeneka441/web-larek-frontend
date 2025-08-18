@@ -3,6 +3,17 @@ import { setDisabled } from '../utils/helpers';
 import { SELECTORS } from '../utils/constants';
 import type { TPayment } from '../types';
 
+type Step1Validator = (
+	payment: 'online' | 'cash' | null,
+	address: string
+) => {
+	valid: boolean;
+	paymentOk: boolean;
+	addressOk: boolean;
+	paymentError?: string;
+	addressError?: string;
+};
+
 export class OrderStep1View {
 	element = cloneTemplate<HTMLFormElement>(SELECTORS.tpl.order);
 	private address = ensureElement<HTMLInputElement>(
@@ -28,14 +39,19 @@ export class OrderStep1View {
 
 	private payment: 'online' | 'cash' | null = null;
 	private paymentClicked = false;
+	private addressEntered = false;
 
-	constructor(onDone: (data: TPayment) => void) {
+	constructor(
+		private validateStep1: Step1Validator,
+		onDone: (data: TPayment) => void
+	) {
 		this.btnCard.addEventListener('click', () => this.choosePayment('online'));
 		this.btnCash.addEventListener('click', () => this.choosePayment('cash'));
 
-		this.address.addEventListener('input', () =>
-			this.validate(this.paymentClicked)
-		);
+		this.address.addEventListener('input', () => {
+			this.addressEntered = this.address.value.trim().length > 0;
+			this.validate(false);
+		});
 
 		this.element.addEventListener('submit', (e) => {
 			e.preventDefault();
@@ -61,20 +77,20 @@ export class OrderStep1View {
 		this.validate(true);
 	}
 
-	private validate(showErrors: boolean): boolean {
-		const addressOk = this.address.value.trim().length > 0;
-		const paymentOk = this.payment !== null;
+	private validate(showAllErrors: boolean): boolean {
+		const { valid, paymentOk, addressOk, paymentError, addressError } =
+			this.validateStep1(this.payment, this.address.value);
 
-		setDisabled(this.submit, !(addressOk && paymentOk));
+		setDisabled(this.submit, !valid);
 
-		if (showErrors) {
-			if (!paymentOk) this.errors.textContent = 'Выберите способ оплаты';
-			else if (!addressOk) this.errors.textContent = 'Необходимо указать адрес';
-			else this.errors.textContent = '';
-		} else {
-			this.errors.textContent = '';
+		let msg = '';
+		if (!paymentOk && (showAllErrors || this.addressEntered)) {
+			msg = paymentError ?? '';
+		} else if (!addressOk && (showAllErrors || this.paymentClicked)) {
+			msg = addressError ?? '';
 		}
+		this.errors.textContent = msg;
 
-		return addressOk && paymentOk;
+		return valid;
 	}
 }
