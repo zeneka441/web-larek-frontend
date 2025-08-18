@@ -41,9 +41,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 		events
 	);
 
-	const basketBtn = ensureElement<HTMLButtonElement>(SELECTORS.basketButton);
-	const basketCounter = ensureElement<HTMLSpanElement>(SELECTORS.basketCounter);
-
 	function renderCatalog(list: ICard[]) {
 		const nodes = list.map((c) => {
 			const data: TProductThumbnail = {
@@ -123,19 +120,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 		modal.render({ content: step2.element });
 	}
 
-	function updateCounter() {
-		basketCounter.textContent = String(basket.getItems().length);
-	}
+	catalogView.onBasketClick(() => openBasket());
+
+	events.on('cart:changed', () => {
+		catalogView.setCounter(basket.getItems().length);
+	});
 
 	try {
 		const catalog = await api.getProductList();
 		cards.setCards(catalog);
 		renderCatalog(catalog);
 
-		basketBtn.addEventListener('click', () => openBasket());
+		catalogView.setCounter(basket.getItems().length);
 		events.on<ICard>('catalog:preview', (card) => openPreview(card));
-		events.on('cart:changed', () => updateCounter());
-		updateCounter();
 	} catch (e) {
 		e instanceof Error ? e.message : String(e);
 	}
