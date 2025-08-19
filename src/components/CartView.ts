@@ -1,7 +1,5 @@
 import { cloneTemplate, ensureElement } from '../utils/utils';
 import { SELECTORS, CURRENCY } from '../utils/constants';
-import type { TProductCart } from '../types';
-import { CartItem } from './CartItem';
 
 export class CartView {
 	element = cloneTemplate<HTMLElement>(SELECTORS.tpl.basket);
@@ -16,15 +14,11 @@ export class CartView {
 	);
 
 	render(
-		items: TProductCart[],
+		items: HTMLElement[],
 		total: number,
-		onRemove: (id: string) => void,
 		onCheckout: () => void
 	) {
-		this.list.replaceChildren(
-			...items.map((it, idx) => new CartItem(it, idx + 1, onRemove).element)
-		);
-
+		this.list.replaceChildren(...items);
 		this.totalEl.textContent = `${total} ${CURRENCY}`;
 		this.checkoutBtn.onclick = onCheckout;
 		this.checkoutBtn.disabled = items.length === 0;

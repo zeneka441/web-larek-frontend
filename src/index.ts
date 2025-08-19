@@ -1,11 +1,5 @@
 import './scss/styles.scss';
-import type {
-	ICard,
-	TProductThumbnail,
-	TProductCart,
-	TPayment,
-	TContact,
-} from './types';
+import type { ICard, TProductThumbnail, TPayment, TContact } from './types';
 
 import { EventEmitter } from './components/base/events';
 import { LarekApi } from './components/LarekApi';
@@ -24,6 +18,7 @@ import { Modal } from './components/Modal';
 
 import { SELECTORS } from './utils/constants';
 import { ensureElement } from './utils/utils';
+import { CartItem } from './components/CartItem';
 
 document.addEventListener('DOMContentLoaded', async () => {
 	ensureElement<HTMLDivElement>(SELECTORS.modalRoot).classList.remove(
@@ -74,24 +69,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 	}
 
 	function openBasket() {
-		const items: TProductCart[] = basket.getItems().map((i) => ({
-			_id: i._id,
-			title: i.title,
-			price: i.price,
-		}));
-		const total = basket.getTotal();
-		const cartView = new CartView();
-
-		cartView.render(
-			items,
-			total,
-			(id) => {
-				basket.remove(id);
-				openBasket();
-			},
+		const items = new CartView();
+		items.render(
+			basket.getItems().map(
+				(i, idx) =>
+					new CartItem(
+						{ _id: i._id, title: i.title, price: i.price },
+						idx + 1,
+						(id) => {
+							basket.remove(id);
+							openBasket();
+						}
+					).element
+			),
+			basket.getTotal(),
 			() => openOrderStep1()
 		);
-		modal.render({ content: cartView.element });
+		modal.render({ content: items.element });
 	}
 
 	function openOrderStep1() {
