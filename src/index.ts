@@ -88,16 +88,52 @@ document.addEventListener('DOMContentLoaded', async () => {
 		modal.render({ content: items.element });
 	}
 
-	function openOrderStep1() {
-		const step1 = new OrderStep1View(
-			form.validateStep1.bind(form),
-			(data: TPayment) => {
-				form.setPaymentAndAddress(data);
+function openOrderStep1() {
+	let payment: 'online' | 'cash' | null = null;
+	let address = '';
+	let addressTouched = false;
+	let paymentClicked = false;
+
+	const step1 = new OrderStep1View({
+		onPaymentSelect: (p) => {
+			payment = p;
+			paymentClicked = true;
+			updateUI(true);
+		},
+		onAddressInput: (v) => {
+			address = v;
+			addressTouched = v.trim().length > 0;
+			updateUI(false);
+		},
+		onSubmit: () => {
+			if (updateUI(true)) {
+				form.setPaymentAndAddress({
+					paymentType: payment as 'online' | 'cash',
+					address: address.trim(),
+				});
 				openOrderStep2();
 			}
-		);
-		modal.render({ content: step1.element });
+		},
+	});
+
+	function updateUI(showAllErrors: boolean): boolean {
+		const res = form.validateStep1(payment, address);
+
+		step1.setSubmitBtnEnabled(res.valid);
+
+		let msg = '';
+		if (!res.paymentOk && (showAllErrors || addressTouched)) {
+			msg = res.paymentError ?? '';
+		} else if (!res.addressOk && (showAllErrors || paymentClicked)) {
+			msg = res.addressError ?? '';
+		}
+		step1.setError(msg);
+
+		return res.valid;
 	}
+
+	modal.render({ content: step1.element });
+}
 
 	function openOrderStep2() {
 		const step2 = new OrderStep2View(async (data: TContact) => {

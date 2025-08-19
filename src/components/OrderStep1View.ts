@@ -1,17 +1,11 @@
 import { cloneTemplate, ensureElement } from '../utils/utils';
 import { setDisabled } from '../utils/helpers';
 import { SELECTORS } from '../utils/constants';
-import type { TPayment } from '../types';
 
-type Step1Validator = (
-	payment: 'online' | 'cash' | null,
-	address: string
-) => {
-	valid: boolean;
-	paymentOk: boolean;
-	addressOk: boolean;
-	paymentError?: string;
-	addressError?: string;
+type Handlers = {
+	onPaymentSelect: (p: 'online' | 'cash') => void;
+	onAddressInput: (value: string) => void;
+	onSubmit: () => void;
 };
 
 export class OrderStep1View {
@@ -37,60 +31,36 @@ export class OrderStep1View {
 		this.element
 	);
 
-	private payment: 'online' | 'cash' | null = null;
-	private paymentClicked = false;
-	private addressEntered = false;
-
-	constructor(
-		private validateStep1: Step1Validator,
-		onDone: (data: TPayment) => void
-	) {
-		this.btnCard.addEventListener('click', () => this.choosePayment('online'));
-		this.btnCash.addEventListener('click', () => this.choosePayment('cash'));
-
-		this.address.addEventListener('input', () => {
-			this.addressEntered = this.address.value.trim().length > 0;
-			this.validate(false);
+	constructor(private handlers: Handlers) {
+		this.btnCard.addEventListener('click', () => {
+			this.choosePayment('online');
+			this.handlers.onPaymentSelect('online');
 		});
-
+		this.btnCash.addEventListener('click', () => {
+			this.choosePayment('cash');
+			this.handlers.onPaymentSelect('cash');
+		});
+		this.address.addEventListener('input', () => {
+			this.handlers.onAddressInput(this.address.value);
+		});
 		this.element.addEventListener('submit', (e) => {
 			e.preventDefault();
-			if (this.validate(true)) {
-				onDone({
-					paymentType: this.payment as 'online' | 'cash',
-					address: this.address.value.trim(),
-				});
-			}
+			this.handlers.onSubmit();
 		});
 
-		this.errors.textContent = '';
-		this.validate(false);
+		this.setError('');
+		this.setSubmitBtnEnabled(false);
 	}
 
 	private choosePayment(p: 'online' | 'cash') {
-		this.payment = p;
-		this.paymentClicked = true;
-
 		this.btnCard.classList.toggle('button_alt', p !== 'online');
 		this.btnCash.classList.toggle('button_alt', p !== 'cash');
-
-		this.validate(true);
 	}
 
-	private validate(showAllErrors: boolean): boolean {
-		const { valid, paymentOk, addressOk, paymentError, addressError } =
-			this.validateStep1(this.payment, this.address.value);
-
-		setDisabled(this.submit, !valid);
-
-		let msg = '';
-		if (!paymentOk && (showAllErrors || this.addressEntered)) {
-			msg = paymentError ?? '';
-		} else if (!addressOk && (showAllErrors || this.paymentClicked)) {
-			msg = addressError ?? '';
-		}
+	setError(msg: string) {
 		this.errors.textContent = msg;
-
-		return valid;
+	}
+	setSubmitBtnEnabled(enabled: boolean) {
+		setDisabled(this.submit, !enabled);
 	}
 }
